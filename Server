@@ -36,8 +36,8 @@ public class Server {
         }
     }
     public static void main(String[] args) throws IOException {
-        ServerSocket serverSocket = new ServerSocket(1234); // listening for clients connecting with this port
-        Server server = new Server (serverSocket);  //
+        ServerSocket serverSocket = new ServerSocket(1234); // listening for clients connecting with this port number
+        Server server = new Server (serverSocket);  // takes the connted port and connects with server
         server.startServer();
     }
 }
