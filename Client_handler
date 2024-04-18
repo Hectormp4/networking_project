@@ -2,47 +2,47 @@ import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 
-public class ClientHandler implements Runnable {
+public class ClientHandler implements Runnable { //instances of code ran on a seperate thread
 
-    public static ArrayList<ClientHandler> clientHandler = new ArrayList<>();
+    public static ArrayList<ClientHandler> clientHandler = new ArrayList<>();  //keeps tracks and holds clients/client messages in order to broadcast to various clients 
     private String clientUsername;
     private Socket socket;
-    private BufferedReader bufferedReader;
-    private BufferedWriter bufferedWriter;
+    private BufferedReader bufferedReader; // reads data from clients
+    private BufferedWriter bufferedWriter; // sends data to clients
     public ClientHandler(Socket socket) {
         try {
-            this.socket = socket;
-            this.bufferedWriter=new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())); // character stream end in Writer | byte stream ends in Stream | sends over characters
-            this.bufferedReader=new BufferedReader(new InputStreamReader(socket.getInputStream())); // This stream reads | this.buffered adds efficienty
-            this.clientUsername=bufferedReader.readLine();
-            clientHandler.add(this);
+            this.socket = socket;  // this.socket is the same value as the socket being passed from the clinet class
+            this.bufferedWriter=new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())); // uses socket output character stream and turning it into bytes in order to be broadcasted 
+            this.bufferedReader=new BufferedReader(new InputStreamReader(socket.getInputStream())); // uses the bytes from the character stream and turns them back to characters for the other clients to read
+            this.clientUsername=bufferedReader.readLine(); When the client is asked to type a username it is saved here
+            clientHandler.add(this); // adds client to array list in order to see broadcasted message
             broadcastMessage("Server: " + clientUsername + " has entered the chat");
         } catch (IOException e) {
             closeEverything(socket, bufferedReader, bufferedWriter);
         }
     }
 
-    @Override
-    public void run() {
-        String messageFromClient;
-        while (socket.isConnected()) {
+    @Override  
+    public void run() {  
+        String messageFromClient; // holds message from client
+        while (socket.isConnected()) { // infiniate loop listening for messages
             try {
-                messageFromClient = bufferedReader.readLine();
-                broadcastMessage(messageFromClient);
+                messageFromClient = bufferedReader.readLine(); // program haults listening for message from client (ran on seperate thread to not stop program)
+                broadcastMessage(messageFromClient);  
 
             } catch (IOException e) {
                 closeEverything(socket, bufferedReader, bufferedWriter);
-                break;
+                break; // when clinet disconnects the loop breaks 
             }
         }
     }
     public void broadcastMessage(String messageToSend) {
-        for (ClientHandler clientHandler : clientHandler) {
+        for (ClientHandler clientHandler : clientHandler) { //clinetHandler represents the interations of the client inside the array list
             try {
-                if (!clientHandler.clientUsername.equals(clientUsername)) {
-                    clientHandler.bufferedWriter.write(messageToSend);
-                    clientHandler.bufferedWriter.newLine();
-                    clientHandler.bufferedWriter.flush();
+                if (!clientHandler.clientUsername.equals(clientUsername)) { // broadcast message to everyone but the clinet itself
+                    clientHandler.bufferedWriter.write(messageToSend); // broadcast what is inside the messagetoSend method
+                    clientHandler.bufferedWriter.newLine(); // Tells the server data is finish being sent over (pressing enter)
+                    clientHandler.bufferedWriter.flush(); // flushes the memory
                 }
             } catch (IOException e) {
                 closeEverything(socket, bufferedReader, bufferedWriter);
@@ -51,14 +51,14 @@ public class ClientHandler implements Runnable {
     }
 
     public void removeClientHandler() {
-        clientHandler.remove(this);
-        broadcastMessage("Server " + clientUsername + " has left the chat");
+        clientHandler.remove(this); // removes client from arraylist
+        broadcastMessage("Server " + clientUsername + " has left the chat"); //passes the message throught the braodcastMessage method
     }
 
     public void closeEverything(Socket socket, BufferedReader bufferedReader, BufferedWriter bufferedWriter) {
         removeClientHandler();
         try {
-            if (bufferedReader != null) {
+            if (bufferedReader != null) { // if bufferedReader isnt empty, then close (avoids null pointer expection)
                 bufferedReader.close();
             }
             if (bufferedWriter != null) {
