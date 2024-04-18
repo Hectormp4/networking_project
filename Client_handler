@@ -5,8 +5,8 @@ import java.util.ArrayList;
 public class ClientHandler implements Runnable { //instances of code ran on a seperate thread
 
     public static ArrayList<ClientHandler> clientHandler = new ArrayList<>();  //keeps tracks and holds clients/client messages in order to broadcast to various clients 
-    private String clientUsername;
-    private Socket socket;
+    private String clientUsername; // creates an obejct for username
+    private Socket socket; // creates a socket object
     private BufferedReader bufferedReader; // reads data from clients
     private BufferedWriter bufferedWriter; // sends data to clients
     public ClientHandler(Socket socket) {
