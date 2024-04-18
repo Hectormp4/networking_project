@@ -17,8 +17,8 @@ public class Server {
                 System.out.println("A new client has connected");
                 ClientHandler clientHandler = new ClientHandler(socket);  // each object in this class communicates with client over socket / runs runnable
 
-                Thread thread = new Thread(clientHandler); // threads allow for simultaneous running with clientHandler being the task executed
-                thread.start();
+                Thread thread = new Thread(clientHandler); // threads allow for simultaneous running with clientHandler being the task executed 
+                thread.start(); //actually executes the clientHandler as oppsed to having a main method 
 
             }
         }catch (IOException e) {
