@@ -3,33 +3,33 @@ import java.net.Socket;
 import java.util.Scanner;
 
 public class Client {
-    private Socket socket;
-    private BufferedReader bufferedReader;
-    private BufferedWriter bufferedWriter;
-    private String username;
+    private Socket socket; // creates a socket object
+    private BufferedReader bufferedReader; // creates an object to read data from clinet
+    private BufferedWriter bufferedWriter; // creates an obejct to send client message data for boradcasting
+    private String username; // username object created 
 
     public Client(Socket socket, String username) {
         try {
             this.socket = socket;
-            this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-            this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())); // uses socket output character stream and turning it into bytes in order to be broadcasted 
+            this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));  // uses the bytes from the character stream and turns them back to characters for the other clients to read
             this.username = username;
         } catch (IOException e) {
             closeEverything(socket, bufferedReader, bufferedWriter);
         }
     }
 
-    public void sendMessage() {
+    public void sendMessage() { //sending messages to the handler
         try {
-            bufferedWriter.write(username);
-            bufferedWriter.newLine();
-            bufferedWriter.flush();
+            bufferedWriter.write(username); //sends clients username to handler (this is being waited for on line 17 in Client_handler)
+            bufferedWriter.newLine(); //data is done being sent over (user has pressed enter)
+            bufferedWriter.flush(); //flushes buffer
 
             Scanner scanner = new Scanner(System.in);
-            while (socket.isConnected()) {
-                String messageToSend = scanner.nextLine();
-                bufferedWriter.write(username + ": " + messageToSend);
-                bufferedWriter.newLine();
+            while (socket.isConnected()) { //infinate loop waiting for messages from client while client connected
+                String messageToSend = scanner.nextLine(); // saves the message from client
+                bufferedWriter.write(username + ": " + messageToSend); // writes the message from the clinet over to server
+                bufferedWriter.newLine(); //stops data from being read and creates a new line for message
                 bufferedWriter.flush();
             }
         } catch (IOException e) {
@@ -38,21 +38,21 @@ public class Client {
     }
 
     public void listenForMessage() {
-        new Thread(new Runnable() {
+        new Thread(new Runnable() { // executes runnable on a new thread
             @Override
             public void run() {
                 String messageFromGroupChat;
 
                 while (socket.isConnected()) {
                     try {
-                        messageFromGroupChat = bufferedReader.readLine();
-                        System.out.println(messageFromGroupChat);
+                        messageFromGroupChat = bufferedReader.readLine(); // read broadcasted message while connected to server
+                        System.out.println(messageFromGroupChat); // outputs that message
                     } catch (IOException e) {
                         closeEverything(socket, bufferedReader, bufferedWriter);
                     }
                 }
             }
-        }).start();
+        }).start(); // starts the thread being created right above
     }
 
     public void closeEverything(Socket socket, BufferedReader bufferedReader, BufferedWriter bufferedWriter) {
@@ -75,7 +75,7 @@ public class Client {
     Scanner scanner = new Scanner(System.in);
     System.out.println("Enter you username for the group chat:");
     String username = scanner.nextLine();
-    Socket socket = new Socket("localhost", 1234);
+    Socket socket = new Socket("localhost", 1234); // creeats a socket object that passes throught the client and connects to server 1234 (localhost = IP)
     Client client = new Client(socket, username);
     client.listenForMessage();
     client.sendMessage();
