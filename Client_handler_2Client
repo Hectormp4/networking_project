@@ -2,7 +2,7 @@ import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 
-public class Client_handler_2Client implements Runnable {
+public class Client_handler2 implements Runnable {
 
     public static ArrayList<Client_handler_2Client> clientHandlerList = new ArrayList<>();
     private static final int MAX_CLIENTS = 2; // Maximum number of clients allowed
