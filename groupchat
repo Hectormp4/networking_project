@@ -2,7 +2,7 @@ import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 
-public class ClientHandler implements Runnable { //instances of code ran on a seperate thread
+public class ClientHandler3 implements Runnable { //instances of code ran on a seperate thread
     public static ArrayList<ClientHandler> clientHandler = new ArrayList<>();  //keeps tracks and holds clients/client messages in order to broadcast to various clients 
     private String clientUsername; // creates an obejct for username
     private Socket socket; // creates a socket object
