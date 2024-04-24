@@ -3,12 +3,11 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 public class ClientHandler3 implements Runnable {
-    public static ArrayList<ClientHandler3> clientHandlers = new ArrayList<>();
     private String clientUsername;
-    private String clientGroup; // Object for the group chat
     private Socket socket;
     private BufferedReader bufferedReader;
     private BufferedWriter bufferedWriter;
+    private String groupChatValue;
 
     public ClientHandler3(Socket socket) {
         try {
@@ -16,79 +15,66 @@ public class ClientHandler3 implements Runnable {
             this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             this.clientUsername = bufferedReader.readLine();
-            this.clientGroup = null; // Initialize current group to null
-            clientHandlers.add(this);
+            this.groupChatValue = bufferedReader.readLine();
+            Server.clientHandlers.add(this);
+            //System.out.println("Added " + this.toString());
             broadcastMessage("Server: " + clientUsername + " has entered the chat");
         } catch (IOException e) {
-            closeEverything();
+            e.printStackTrace();
+            closeEverything(socket, bufferedReader, bufferedWriter);
         }
     }
 
     @Override
     public void run() {
         String messageFromClient;
-        while (socket.isConnected()) {
-            try {
-                messageFromClient = bufferedReader.readLine();
-                if (messageFromClient != null) {
-                    if (messageFromClient.startsWith("/join")) { // Check if client wants to join a group chat
-                        String groupName = messageFromClient.substring(6).trim(); // Extract group name
-                        joinGroupChat(groupName);
-                    } else {
-                        broadcastMessage(messageFromClient); // Otherwise, broadcast message to current group
-                    }
+        try {
+            while ((messageFromClient = bufferedReader.readLine()) != null) {
+                if (messageFromClient.equals("EXITCOND")) {
+                    closeEverything(socket, bufferedReader, bufferedWriter);
+                    break;
+                } else {
+                    broadcastMessage(messageFromClient);
                 }
-            } catch (IOException e) {
-                closeEverything();
-                break;
             }
+        } catch (IOException e) {
+            //e.printStackTrace();
+            closeEverything(socket, bufferedReader, bufferedWriter);
         }
-    }
-
-    public void joinGroupChat(String groupName) {
-        if (clientGroup != null) {
-            broadcastMessage("Server: " + clientUsername + " has left the group chat");
-        }
-        clientGroup = groupName; // Set current group to the one joined
-        broadcastMessage("Server: " + clientUsername + " has joined the group chat " + groupName);
     }
 
     public void broadcastMessage(String messageToSend) {
-        for (ClientHandler3 clientHandler : clientHandlers) {
+            for (ClientHandler3 clientHandler : Server.clientHandlers) {
+                try {
+                    if (clientHandler.groupChatValue.equals(groupChatValue) && !clientHandler.clientUsername.equals(clientUsername)) {
+                        clientHandler.bufferedWriter.write(messageToSend);
+                        clientHandler.bufferedWriter.newLine();
+                        clientHandler.bufferedWriter.flush();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    clientHandler.closeEverything(socket, bufferedReader, bufferedWriter);
+                }
+            }
+    }
+
+    public void closeEverything(Socket socket, BufferedReader bufferedReader, BufferedWriter bufferedWriter) {
+            Server.clientHandlers.remove(this);
+            System.out.println("A client has disconnected");
+            //System.out.println("Removed " + this.toString());
+            broadcastMessage("Server " + clientUsername + " has left the chat");
             try {
-                if (clientGroup == null || clientHandler.clientGroup.equals(clientGroup)) {
-                    // Broadcast message to clients in the same group or if client is not in any group
-                    clientHandler.bufferedWriter.write(messageToSend);
-                    clientHandler.bufferedWriter.newLine();
-                    clientHandler.bufferedWriter.flush();
+                if (bufferedReader != null) {
+                    bufferedReader.close();
+                }
+                if (bufferedWriter != null) {
+                    bufferedWriter.close();
+                }
+                if (socket != null) {
+                    socket.close();
                 }
             } catch (IOException e) {
-                closeEverything();
+                e.printStackTrace();
             }
         }
     }
-
-    public void removeClientHandler() {
-        clientHandlers.remove(this);
-        if (clientGroup != null) {
-            broadcastMessage("Server: " + clientUsername + " has left the group chat");
-        }
-    }
-
-    public void closeEverything() {
-        removeClientHandler();
-        try {
-            if (bufferedReader != null) {
-                bufferedReader.close();
-            }
-            if (bufferedWriter != null) {
-                bufferedWriter.close();
-            }
-            if (socket != null) {
-                socket.close();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-}
